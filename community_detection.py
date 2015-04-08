@@ -33,19 +33,23 @@ def read_data():
 
 	return laplacian_matrix
 
-if __name__=='__main__':
+def get_max_difference_index (array):
 
-	# Get Laplacian matrix representing graoh network from data file containing edges
-	laplacian_matrix = read_data()
+	max_difference = 0
+	index = 0
+	for i in range(1,len(array)):
+		if (array[i] - array[i - 1]) > max_difference:
+			max_difference = array[i] - array[i - 1]
+			index = i
 
-	# Get eigenvalues and eigenvectors of Laplacian matrix
-	eigenvalues, eigenvectors = LA.eig(laplacian_matrix)
+	return index
 
-	# Naive clustering of graph into 2 communities
+def naive_cluster (eigenvector):
+
 	community_1 = 0
 	community_2 = 0
 	cluster_array = []
-	for i,ele in enumerate(eigenvectors[:,1]):
+	for i,ele in enumerate(eigenvector):
 		if ele >= 0:
 			community_1 += 1
 			cluster_array.append(1)
@@ -57,4 +61,27 @@ if __name__=='__main__':
 	print community_2
 	print len(cluster_array)
 
-	# Extension: Vary k (number of communities); cluster points of graph into k clusters
+	return cluster_array
+
+if __name__=='__main__':
+
+	# Get Laplacian matrix representing graph network from data file containing edges
+	laplacian_matrix = read_data()
+
+	# Get eigenvalues and eigenvectors of Laplacian matrix
+	eigenvalues, eigenvectors = LA.eig(laplacian_matrix)
+
+	# Sort eigenvalues and eigenvectors from smallest to largest
+	idx = eigenvalues.argsort()   
+	eigenvalues = eigenvalues[idx]
+	eigenvectors = eigenvectors[:,idx]
+
+	# Naive clustering of graph into 2 communities based on 2nd eigenvalue
+	clustered_array = naive_cluster(eigenvectors[:,1])
+
+	# Extension: Vary k (number of communities); cluster points of graph into k clusters using k-means clustering
+	# Get index of max difference between 2 eigenvalues, this gives the number of communities to be formed
+	index = get_max_difference_index(eigenvalues)
+	print index
+
+
