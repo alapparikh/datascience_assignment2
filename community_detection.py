@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 from numpy import linalg as LA
+from sklearn.cluster import KMeans
 
 def read_data():
 
@@ -33,14 +34,18 @@ def read_data():
 
 	return laplacian_matrix
 
-def get_max_difference_index (array):
+def get_cut_index (array):
 
-	max_difference = 0
+	max_ratio = 0
 	index = 0
-	for i in range(1,len(array)):
-		if (array[i] - array[i - 1]) > max_difference:
-			max_difference = array[i] - array[i - 1]
-			index = i
+	#print 'array 0: ', array[0]
+	for i in range(1,len(array) - 1):
+		#print array[i]
+		if (array[i] - array[i-1] != 0):
+			ratio = (array[i+1] - array[i])/(array[i] - array[i-1])
+			if ratio > max_ratio:
+				max_ratio = ratio
+				index = i
 
 	return index
 
@@ -77,11 +82,25 @@ if __name__=='__main__':
 	eigenvectors = eigenvectors[:,idx]
 
 	# Naive clustering of graph into 2 communities based on 2nd eigenvalue
-	clustered_array = naive_cluster(eigenvectors[:,1])
+	#clustered_array = naive_cluster(eigenvectors[:,1])
 
 	# Extension: Vary k (number of communities); cluster points of graph into k clusters using k-means clustering
 	# Get index of max difference between 2 eigenvalues, this gives the number of communities to be formed
-	index = get_max_difference_index(eigenvalues)
-	print index
+	index = get_cut_index(eigenvalues)
+	print 'index: ', index
 
+	sliced_array = eigenvectors[:,:index]
+	print sliced_array.shape
+	print eigenvectors.shape
 
+	# K Means clustering
+	kmeans = KMeans(n_clusters=index)
+	results = kmeans.fit_predict(sliced_array)
+	total_number = {}
+	for result in results:
+		if result in total_number:
+			total_number[result] += 1
+		else:
+			total_number[result] = 1
+
+	print total_number
